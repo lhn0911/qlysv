@@ -1,3 +1,4 @@
+// Index.tsx
 import React, { useState } from 'react';
 import Addsv from './Addsv';
 
@@ -39,6 +40,7 @@ const getInitialStudents = (): Student[] => {
 const Index: React.FC = () => {
   const [students, setStudents] = useState<Student[]>(getInitialStudents());
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editMode, setEditMode] = useState<number | null>(null);
 
   const updateLocalStorage = (updatedStudents: Student[]) => {
     localStorage.setItem('students', JSON.stringify(updatedStudents));
@@ -46,26 +48,35 @@ const Index: React.FC = () => {
   };
 
   const handleToggleBlock = (id: number) => {
-    const updatedStudents = students.map((student) =>
-      student.id === id
-        ? { ...student, status: student.status === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động' }
-        : student
-    );
-    updateLocalStorage(updatedStudents);
+    if (window.confirm('Bạn có chắc chắn muốn thực hiện hành động này không?')) {
+      const updatedStudents = students.map((student) =>
+        student.id === id
+          ? { ...student, status: student.status === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động' }
+          : student
+      );
+      updateLocalStorage(updatedStudents);
+    }
   };
 
   const handleEdit = (id: number) => {
-    // Logic for editing student
+    setEditMode(id);
+  };
+
+  const handleSave = (id: number) => {
+    setEditMode(null);
+    // Logic to save edited data
   };
 
   const handleDelete = (id: number) => {
-    const updatedStudents = students.filter((student) => student.id !== id);
-    updateLocalStorage(updatedStudents);
+    if (window.confirm('Bạn có chắc chắn muốn xóa sinh viên này không?')) {
+      const updatedStudents = students.filter((student) => student.id !== id);
+      updateLocalStorage(updatedStudents);
+    }
   };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <h2>Quản lý sinh viên</h2>
         <button
           style={{
@@ -107,7 +118,21 @@ const Index: React.FC = () => {
               <tr key={student.id}>
                 <td>{index + 1}</td>
                 <td>{student.code}</td>
-                <td>{student.name}</td>
+                <td>
+                  {editMode === student.id ? (
+                    <input
+                      type="text"
+                      value={student.name}
+                      onChange={(e) => {
+                        const updatedStudents = [...students];
+                        updatedStudents[index].name = e.target.value;
+                        setStudents(updatedStudents);
+                      }}
+                    />
+                  ) : (
+                    student.name
+                  )}
+                </td>
                 <td>{student.dateOfBirth}</td>
                 <td>{student.email}</td>
                 <td
@@ -120,24 +145,48 @@ const Index: React.FC = () => {
                   {student.status}
                 </td>
                 <td>
-                  <button
-                    style={{ backgroundColor: 'rgb(239, 212, 251)', borderRadius: '5px', color: 'purple', border: 'none' }}
-                    onClick={() => handleToggleBlock(student.id)}
-                  >
-                    {student.status === 'Đang hoạt động' ? 'Chặn' : 'Bỏ chặn'}
-                  </button>
-                  <button
-                    style={{
-                      backgroundColor: 'rgb(255, 221, 201)',
-                      borderRadius: '5px',
-                      color: 'orangered',
-                      marginLeft: '10px',
-                      border: 'none',
-                    }}
-                    onClick={() => handleEdit(student.id)}
-                  >
-                    Sửa
-                  </button>
+                  {editMode === student.id ? (
+                    <button
+                      style={{
+                        backgroundColor: 'rgb(155, 48, 255)',
+                        borderRadius: '5px',
+                        color: 'white',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => handleSave(student.id)}
+                    >
+                      Lưu
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        style={{
+                          backgroundColor: 'rgb(239, 212, 251)',
+                          borderRadius: '5px',
+                          color: 'purple',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => handleToggleBlock(student.id)}
+                      >
+                        {student.status === 'Đang hoạt động' ? 'Chặn' : 'Bỏ chặn'}
+                      </button>
+                      <button
+                        style={{
+                          backgroundColor: 'rgb(255, 221, 201)',
+                          borderRadius: '5px',
+                          color: 'orangered',
+                          marginLeft: '10px',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => handleEdit(student.id)}
+                      >
+                        Sửa
+                      </button>
+                    </>
+                  )}
                   <button
                     style={{
                       backgroundColor: 'rgb(255, 179, 179)',
@@ -145,6 +194,7 @@ const Index: React.FC = () => {
                       color: 'red',
                       marginLeft: '10px',
                       border: 'none',
+                      cursor: 'pointer',
                     }}
                     onClick={() => handleDelete(student.id)}
                   >
